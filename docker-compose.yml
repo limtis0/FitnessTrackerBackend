@@ -1,0 +1,27 @@
+version: '3.7'
+
+services:  
+  web:
+    image: fitnesstracker:latest
+    container_name: fitnesstracker
+
+    depends_on:
+      - "redis_image"
+
+    build:
+      dockerfile: FitnessTrackerBackend/Dockerfile
+
+    ports:
+      - "5000:80"
+      # - "5001:443"
+      - "5002:44319"  # Swagger
+
+    links:
+      - "redis_image"
+
+  redis_image:
+    image: redis
+    container_name: redis.cache
+
+    ports:
+      - "6379:6379"

@@ -1,0 +1,44 @@
+# Build artifacts
+*/bin/
+*/obj/
+
+# Local files
+.vs/
+*.user
+*.vsconfig
+
+# Package files
+*.nupkg
+*.paket.*
+paket-files/
+packages/
+*.xpi
+*.crx
+*.vsix
+*.nupkg
+
+# Logs and databases
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.mdb
+*.sdf
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Test results
+TestResults/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Visual Studio files
+*.suo
+*.user
+*.vspscc
+*.vssscc
+*.psess
+*.vstemplate
+*.docstates
+*.dotCover
