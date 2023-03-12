@@ -6,8 +6,10 @@ namespace FitnessTrackerBackend.Services.Authentication
     {
         Task<string?> RegisterUserAsync(UserRegistrationModel registration);
         Task<string?> LoginUserAsync(UserLoginModel login);
-        Task<UserModel> GetUserByEmailAsync(string email);
-        Task<UserModel> GetUserByUsernameAsync(string username);
+        Task<UserModel?> GetUserByIdAsync(string userId);
+        Task<UserModel?> GetUserByEmailAsync(string email);
+        Task<UserModel?> GetUserByUsernameAsync(string username);
         Task<bool> RemoveUserAsync(string userId);
+        Task<string> GetUserCount();
     }
 }

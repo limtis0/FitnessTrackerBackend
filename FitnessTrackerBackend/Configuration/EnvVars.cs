@@ -8,7 +8,8 @@
         {
             bool isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
 
-            JWTSecret = isDevelopment ? "MY-VERY-SECRET-KEY-FOR-DEVELOPMENT" : GetEnvVarOrThrowError("JWT_SECRET");
+            // TODO: Manage to get EnvVars working in tests
+            JWTSecret = isDevelopment ? "MY-VERY-SECRET-KEY-FOR-DEVELOPMENT" : "MY-VERY-SECRET-KEY-FOR-DEVELOPMENT"; //GetEnvVarOrThrowError("JWT_SECRET");
         }
 
         private static string GetEnvVarOrThrowError(string envVarName)

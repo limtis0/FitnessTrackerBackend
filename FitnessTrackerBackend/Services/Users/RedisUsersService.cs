@@ -5,6 +5,7 @@ using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 namespace FitnessTrackerBackend.Services.Authentication
 {
@@ -34,18 +35,10 @@ namespace FitnessTrackerBackend.Services.Authentication
 
             UserModel user = new(id, registration.Username, registration.Email, hashedPassword);
 
-            // Create hash entries from user object
-            var userEntries = new HashEntry[]
-            {
-                new HashEntry("username", user.Username),
-                new HashEntry("email", user.Email),
-                new HashEntry("passwordHash", user.PasswordHash)
-            };
-
             // Add user hash to Redis
-            await _redis.HashSetAsync("users:byEmail", user.Email, user.Id);
-            await _redis.HashSetAsync("users:byUsername", user.Username, user.Id);
-            await _redis.HashSetAsync($"users:byId:{user.Id}", userEntries);
+            await _redis.HashSetAsync("users:idsByEmail", user.Email, user.Id);
+            await _redis.HashSetAsync("users:idsByUsername", user.Username, user.Id);
+            await _redis.HashSetAsync($"users:byId", user.Id, JsonSerializer.Serialize(user));
 
             return GenerateUserJWTToken(user);
         }
@@ -93,19 +86,53 @@ namespace FitnessTrackerBackend.Services.Authentication
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public Task<bool> RemoveUserAsync(string userId)
+        public async Task<UserModel?> GetUserByIdAsync(string userId)
         {
-            throw new NotImplementedException();
+            RedisValue json = await _redis.HashGetAsync($"users:byId", userId);
+
+            if (!json.HasValue)
+            {
+                return null;
+            }
+
+
+            return JsonSerializer.Deserialize<UserModel>(json!);
         }
 
-        public Task<UserModel> GetUserByEmailAsync(string email)
+        public async Task<UserModel?> GetUserByEmailAsync(string email)
         {
-            throw new NotImplementedException();
+            string? userId = await _redis.HashGetAsync("users:idsByEmail", email);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return null;
+            }
+
+            return await GetUserByIdAsync(userId);
         }
 
-        public Task<UserModel> GetUserByUsernameAsync(string username)
+        public async Task<UserModel?> GetUserByUsernameAsync(string username)
         {
-            throw new NotImplementedException();
+            string? userId = await _redis.HashGetAsync("users:idsByUsername", username);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return null;
+            }
+
+            return await GetUserByIdAsync(userId);
+        }
+
+        public async Task<bool> RemoveUserAsync(string userId)
+        {
+            return await _redis.KeyDeleteAsync($"users:byId:{userId}");
+        }
+
+        public async Task<string> GetUserCount()
+        {
+            string? count = await _redis.StringGetAsync("users:Ids");
+
+            return count ?? "0";
         }
     }
 }
