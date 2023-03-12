@@ -1,20 +1,15 @@
-using FitnessTrackerBackend.Test.Fixtures;
+using FitnessTrackerBackend.Test.Fixtures.Redis;
 using StackExchange.Redis;
 
 namespace FitnessTrackerBackend.Test
 {
-    [Collection("RedisCollection")]
-    public class RedisTests
+    public class RedisTests : IClassFixture<RedisFixture>
     {
         private readonly IDatabase _redis;
 
         public RedisTests(RedisFixture redisFixture)
         {
-            if (redisFixture.ServiceProvider.GetService(typeof(IConnectionMultiplexer)) is not IConnectionMultiplexer redis)
-            {
-                throw new ArgumentException("Redis service is not set up, or set up incorrectly");
-            }
-            _redis = redis.GetDatabase();
+            _redis = redisFixture.DB;
         }
 
         [Fact]

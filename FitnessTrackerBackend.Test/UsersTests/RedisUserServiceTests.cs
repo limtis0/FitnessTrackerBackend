@@ -1,23 +1,26 @@
 ﻿using FitnessTrackerBackend.Models.Authentication;
 using FitnessTrackerBackend.Services.Authentication;
-using FitnessTrackerBackend.Test.Fixtures;
+using FitnessTrackerBackend.Test.Fixtures.Redis;
 using StackExchange.Redis;
-
 
 namespace FitnessTrackerBackend.Test.UsersTests
 {
-    [Collection("RedisCollection")]
-    public class RedisUserServiceTests
+    public class RedisUserServiceTests : IClassFixture<RedisFixture>, IDisposable
     {
+        private readonly RedisFixture _redisFixture;
         private readonly IDatabase _redis;
 
         public RedisUserServiceTests(RedisFixture redisFixture)
         {
-            if (redisFixture.ServiceProvider.GetService(typeof(IConnectionMultiplexer)) is not IConnectionMultiplexer redis)
-            {
-                throw new ArgumentException("Redis service is not set up, or set up incorrectly");
-            }
-            _redis = redis.GetDatabase();
+            _redisFixture = redisFixture;
+            _redis = redisFixture.DB;
+        }
+
+        public void Dispose()
+        {
+            _redisFixture.FlushDatabase();
+
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
