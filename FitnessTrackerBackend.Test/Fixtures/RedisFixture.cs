@@ -9,7 +9,6 @@ namespace FitnessTrackerBackend.Test.Fixtures
     {
         private readonly DockerClient _dockerClient;
         private readonly string _containerId;
-        private readonly ConnectionMultiplexer _redis;
 
         public RedisFixture()
         {
@@ -19,9 +18,6 @@ namespace FitnessTrackerBackend.Test.Fixtures
             _containerId = StartRedisContainer("6380").ID;
 
             _dockerClient.Containers.StartContainerAsync(_containerId, null).GetAwaiter().GetResult();
-
-            // Connect to the Redis container
-            _redis = ConnectionMultiplexer.Connect("localhost:6380");
 
             var services = new ServiceCollection();
             services.AddSingleton<IConnectionMultiplexer>(provider =>
