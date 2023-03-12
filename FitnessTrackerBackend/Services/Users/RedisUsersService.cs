@@ -125,7 +125,18 @@ namespace FitnessTrackerBackend.Services.Authentication
 
         public async Task<bool> RemoveUserAsync(string userId)
         {
-            return await _redis.KeyDeleteAsync($"users:byId:{userId}");
+            UserModel? user = await GetUserByIdAsync(userId);
+
+            if (user is null)
+            {
+                return false;
+            }
+
+            bool removeUser = await _redis.HashDeleteAsync($"users:byId", user.Id);
+            bool removeEmail = await _redis.HashDeleteAsync("users:idsByEmail", user.Email);
+            bool removeUsername = await _redis.HashDeleteAsync("users:idsByUsername", user.Username);
+
+            return removeUser && removeEmail && removeUsername;
         }
 
         public async Task<string> GetUserCount()
