@@ -12,13 +12,33 @@ namespace FitnessTrackerBackend.Services.Authentication
     public class RedisUsersService : IRedisUsersService
     {
         private readonly IDatabase _redis;
+        private readonly JwtBearerOptionsConfig _jwtBearerOptions;
+        private readonly TokenValidationParameters _tokenValidationParameters;
 
-        public RedisUsersService(IDatabase redis)
+        private const string UserIdByEmailHashKey = "users:idsByEmail";
+        private const string UserIdByUsernameHashKey = "users:idsByUsername";
+        private const string UserByIdHashKey = "users:byId";
+        private const string UserCountStringKey = "users:Ids";
+
+        public RedisUsersService(IDatabase redis, JwtBearerOptionsConfig jwtBearerOptions)
         {
             _redis = redis;
+
+            _jwtBearerOptions = jwtBearerOptions;
+
+            _tokenValidationParameters = new()
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _jwtBearerOptions.Issuer,
+                ValidAudience = _jwtBearerOptions.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtBearerOptions.Secret))
+            };
         }
 
-        public async Task<string?> RegisterUserAsync(UserRegistrationModel registration)
+        public async Task<UserModel?> RegisterUserAsync(UserRegistrationModel registration)
         {
             // Check if user already exists
             if (await GetUserByUsernameAsync(registration.Username) is not null || await GetUserByEmailAsync(registration.Email) is not null)
@@ -27,7 +47,7 @@ namespace FitnessTrackerBackend.Services.Authentication
             }
 
             // Set user ID from Redis increment
-            string id = (await _redis.StringIncrementAsync("users:Ids")).ToString();
+            string id = (await _redis.StringIncrementAsync(UserCountStringKey)).ToString();
 
             // Generate salt and hash password
             string salt = BCrypt.Net.BCrypt.GenerateSalt();
@@ -36,14 +56,14 @@ namespace FitnessTrackerBackend.Services.Authentication
             UserModel user = new(id, registration.Username, registration.Email, hashedPassword);
 
             // Add user hash to Redis
-            await _redis.HashSetAsync("users:idsByEmail", user.Email, user.Id);
-            await _redis.HashSetAsync("users:idsByUsername", user.Username, user.Id);
-            await _redis.HashSetAsync($"users:byId", user.Id, JsonSerializer.Serialize(user));
+            await _redis.HashSetAsync(UserIdByEmailHashKey, user.Email, user.Id);
+            await _redis.HashSetAsync(UserIdByUsernameHashKey, user.Username, user.Id);
+            await _redis.HashSetAsync(UserByIdHashKey, user.Id, JsonSerializer.Serialize(user));
 
-            return GenerateUserJWTToken(user);
+            return user;
         }
 
-        public async Task<string?> LoginUserAsync(UserLoginModel login)
+        public async Task<UserModel?> LoginUserAsync(UserLoginModel login)
         {
             // Get a user by username or email
             var user = await GetUserByUsernameAsync(login.UsernameOrEmail) ?? await GetUserByEmailAsync(login.UsernameOrEmail);
@@ -60,11 +80,16 @@ namespace FitnessTrackerBackend.Services.Authentication
                 return null;
             }
 
-            return GenerateUserJWTToken(user);
+            return user;
         }
 
-        private static string GenerateUserJWTToken(UserModel user)
+        public string GenerateUserJWTToken(UserModel user)
         {
+            if (user is null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             // Create claims for the JWT token
             var claims = new[]
             {
@@ -74,11 +99,11 @@ namespace FitnessTrackerBackend.Services.Authentication
             };
 
             // Generate the JWT token
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(EnvVars.JWTSecret));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtBearerOptions.Secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
-                issuer: JWTConfig.issuer,
-                audience: JWTConfig.audience,
+                issuer: _jwtBearerOptions.Issuer,
+                audience: _jwtBearerOptions.Audience,
                 claims: claims,
                 expires: DateTime.Now.AddDays(7),
                 signingCredentials: creds);
@@ -86,22 +111,41 @@ namespace FitnessTrackerBackend.Services.Authentication
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public async Task<UserModel?> GetUserByJWTToken(string token)
+        {
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                
+                var claimsPrincipal = handler.ValidateToken(token, _tokenValidationParameters, out var validatedToken);
+                
+                var jwtToken = (JwtSecurityToken)validatedToken;
+
+                string userId = jwtToken.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+
+                return await GetUserByIdAsync(userId);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public async Task<UserModel?> GetUserByIdAsync(string userId)
         {
-            RedisValue json = await _redis.HashGetAsync($"users:byId", userId);
+            RedisValue json = await _redis.HashGetAsync(UserByIdHashKey, userId);
 
             if (!json.HasValue)
             {
                 return null;
             }
 
-
             return JsonSerializer.Deserialize<UserModel>(json!);
         }
 
         public async Task<UserModel?> GetUserByEmailAsync(string email)
         {
-            string? userId = await _redis.HashGetAsync("users:idsByEmail", email);
+            string? userId = await _redis.HashGetAsync(UserIdByEmailHashKey, email);
 
             if (string.IsNullOrEmpty(userId))
             {
@@ -113,7 +157,7 @@ namespace FitnessTrackerBackend.Services.Authentication
 
         public async Task<UserModel?> GetUserByUsernameAsync(string username)
         {
-            string? userId = await _redis.HashGetAsync("users:idsByUsername", username);
+            string? userId = await _redis.HashGetAsync(UserIdByUsernameHashKey, username);
 
             if (string.IsNullOrEmpty(userId))
             {
@@ -132,16 +176,16 @@ namespace FitnessTrackerBackend.Services.Authentication
                 return false;
             }
 
-            bool removeUser = await _redis.HashDeleteAsync($"users:byId", user.Id);
-            bool removeEmail = await _redis.HashDeleteAsync("users:idsByEmail", user.Email);
-            bool removeUsername = await _redis.HashDeleteAsync("users:idsByUsername", user.Username);
+            bool removeUser = await _redis.HashDeleteAsync(UserByIdHashKey, user.Id);
+            bool removeEmail = await _redis.HashDeleteAsync(UserIdByEmailHashKey, user.Email);
+            bool removeUsername = await _redis.HashDeleteAsync(UserIdByUsernameHashKey, user.Username);
 
             return removeUser && removeEmail && removeUsername;
         }
 
         public async Task<string> GetUserCount()
         {
-            string? count = await _redis.StringGetAsync("users:Ids");
+            string? count = await _redis.StringGetAsync(UserCountStringKey);
 
             return count ?? "0";
         }
