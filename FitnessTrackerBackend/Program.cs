@@ -51,18 +51,25 @@ internal class Program
 
     private static void ConfigureJWTAuth(WebApplicationBuilder builder)
     {
+        var bearerOptionsConfig = builder.Configuration.GetSection("JwtBearerOptions");
+
+        builder.Services.Configure<JwtBearerOptionsConfig>(bearerOptionsConfig);
+
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                var jwtBearerOptions = bearerOptionsConfig.Get<JwtBearerOptionsConfig>()
+                    ?? throw new Exception("'JwtBearerOptions' section not found in 'appsettings.json'");
+                
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = JWTConfig.audience,
-                    ValidAudience = JWTConfig.issuer,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(EnvVars.JWTSecret))
+                    ValidIssuer = jwtBearerOptions.Issuer,
+                    ValidAudience = jwtBearerOptions.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtBearerOptions.Secret))
                 };
             });
     }
