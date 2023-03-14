@@ -15,8 +15,7 @@ namespace FitnessTrackerBackend.Test.UsersTests
         private readonly RedisFixture _redisFixture;
         private readonly IDatabase _redis;
         private readonly JwtBearerOptionsConfig _jwtBearerOptions;
-
-    private readonly RedisUsersService _usersService;
+        private readonly RedisUsersService _usersService;
 
         public RedisUsersServiceTests(RedisFixture redisFixture)
         {

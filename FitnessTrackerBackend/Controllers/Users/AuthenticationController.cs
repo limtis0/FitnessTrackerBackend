@@ -25,7 +25,8 @@ namespace FitnessTrackerBackend.Controllers.Authentication
             }
 
             var jwtBearer = _usersService.GenerateUserJWTToken(user);
-            return Ok(new { jwtBearer });
+
+            return Ok(new Dictionary<string, string> { { "jwtBearer", jwtBearer } });
         }
 
         [HttpPost]
@@ -38,7 +39,8 @@ namespace FitnessTrackerBackend.Controllers.Authentication
             }
 
             var jwtBearer = _usersService.GenerateUserJWTToken(user);
-            return Ok(new { jwtBearer });
+
+            return Ok(new Dictionary<string, string> { { "jwtBearer", jwtBearer } });
         }
     }
 }
