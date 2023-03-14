@@ -8,12 +8,12 @@ namespace FitnessTrackerBackend.Models.Authentication
         public string UsernameOrEmail { get; init; }
 
         [Required]
-        [StringLength(100, MinimumLength = 8)]
+        [StringLength(128)]
         public string Password { get; init; }
 
-        public UserLoginModel(string emailOrUsername, string password)
+        public UserLoginModel(string usernameOrEmail, string password)
         {
-            UsernameOrEmail = emailOrUsername;
+            UsernameOrEmail = usernameOrEmail;
             Password = password;
         }
     }

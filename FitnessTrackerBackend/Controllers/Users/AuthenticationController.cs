@@ -15,22 +15,30 @@ namespace FitnessTrackerBackend.Controllers.Authentication
             _usersService = usersService;
         }
 
-        [HttpPost()]
+        [HttpPost]
         public async Task<IActionResult> Registration([FromBody] UserRegistrationModel registration)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var user = await _usersService.RegisterUserAsync(registration);
             if (user == null)
             {
                 return BadRequest("User with this email/username already exists");
             }
 
-            var token = _usersService.GenerateUserJWTToken(user);
-            return Ok(new { token });
+            var jwtBearer = _usersService.GenerateUserJWTToken(user);
+            return Ok(new { jwtBearer });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login([FromBody] UserLoginModel login)
+        {
+            var user = await _usersService.LoginUserAsync(login);
+            if (user == null)
+            {
+                return BadRequest("Invalid credentials");
+            }
+
+            var jwtBearer = _usersService.GenerateUserJWTToken(user);
+            return Ok(new { jwtBearer });
         }
     }
 }

@@ -9,7 +9,8 @@ namespace FitnessTrackerBackend.Models.Authentication
         public string Username { get; init; }
 
         [Required]
-        [EmailAddress]
+        [StringLength(320, MinimumLength = 3)]
+        [RegularExpression(@"^[\w!#$%&'*+\-/=?\^_`{|}~]+(\.[\w!#$%&'*+\-/=?\^_`{|}~]+)*" + "@" + @"((([\-\w]+\.)+[a-zA-Z]{2,4})|(([0-9]{1,3}\.){3}[0-9]{1,3}))$", ErrorMessage = "Specified email has invalid format")]
         public string Email { get; init; }
 
         [Required]
