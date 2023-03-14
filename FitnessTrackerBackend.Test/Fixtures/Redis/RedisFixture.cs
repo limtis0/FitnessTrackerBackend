@@ -3,32 +3,32 @@ using Docker.DotNet;
 using StackExchange.Redis;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FitnessTrackerBackend.Test.Fixtures
+namespace FitnessTrackerBackend.Test.Fixtures.Redis
 {
     public class RedisFixture : IDisposable
     {
         private readonly DockerClient _dockerClient;
         private readonly string _containerId;
-        private readonly ConnectionMultiplexer _redis;
+        private static int containerCount = 0;
 
         public RedisFixture()
         {
+            string containerPort = (6380 + containerCount++).ToString();
+
             // Create a Docker client
             _dockerClient = new DockerClientConfiguration(new Uri("npipe://./pipe/docker_engine")).CreateClient();
 
-            _containerId = StartRedisContainer("6380").ID;
+            _containerId = StartRedisContainer(containerPort).ID;
 
             _dockerClient.Containers.StartContainerAsync(_containerId, null).GetAwaiter().GetResult();
-
-            // Connect to the Redis container
-            _redis = ConnectionMultiplexer.Connect("localhost:6380");
 
             var services = new ServiceCollection();
             services.AddSingleton<IConnectionMultiplexer>(provider =>
             {
-                var configuration = ConfigurationOptions.Parse("localhost:6380");
+                var configuration = ConfigurationOptions.Parse($"localhost:{containerPort}");
                 return ConnectionMultiplexer.Connect(configuration);
             });
+
             ServiceProvider = services.BuildServiceProvider();
         }
 
@@ -45,7 +45,7 @@ namespace FitnessTrackerBackend.Test.Fixtures
             var createContainerResponse = _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
             {
                 Image = "redis:latest",
-                Name = "redis.test",
+                Name = $"redis.test.{hostPort}",
                 HostConfig = new HostConfig
                 {
                     PortBindings = new Dictionary<string, IList<PortBinding>>
@@ -67,8 +67,6 @@ namespace FitnessTrackerBackend.Test.Fixtures
             return createContainerResponse;
         }
 
-        public IServiceProvider ServiceProvider { get; private set; }
-
         public void Dispose()
         {
             // Stop and remove the Redis container
@@ -77,13 +75,22 @@ namespace FitnessTrackerBackend.Test.Fixtures
 
             GC.SuppressFinalize(this);
         }
-    }
 
-    [CollectionDefinition("RedisCollection")]
-    public class RedisCollection : ICollectionFixture<RedisFixture>
-    {
-        // This class has no code, and is never created. Its purpose is simply
-        // to be the place to apply [CollectionDefinition] and all the
-        // ICollectionFixture<> interfaces.
+        public IServiceProvider ServiceProvider { get; private set; }
+
+        public IDatabase DB
+        { 
+            get 
+            {
+                var redis = ServiceProvider.GetService<IConnectionMultiplexer>() ?? throw new ArgumentException("Redis service is not set up, or set up incorrectly");
+                return redis.GetDatabase();
+            }
+        }
+
+        public void FlushDatabase()
+        {
+            DB.Execute("FLUSHDB");
+        }
+
     }
 }
