@@ -34,7 +34,7 @@ namespace FitnessTrackerBackend.Services.Authentication
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = _jwtBearerOptions.Issuer,
                 ValidAudience = _jwtBearerOptions.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtBearerOptions.Secret))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtBearerOptions.Secret!))
             };
         }
 
@@ -99,7 +99,7 @@ namespace FitnessTrackerBackend.Services.Authentication
             };
 
             // Generate the JWT token
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtBearerOptions.Secret));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtBearerOptions.Secret!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
                 issuer: _jwtBearerOptions.Issuer,

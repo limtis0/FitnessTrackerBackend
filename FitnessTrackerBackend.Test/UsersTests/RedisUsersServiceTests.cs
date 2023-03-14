@@ -22,7 +22,12 @@ namespace FitnessTrackerBackend.Test.UsersTests
         {
             _redisFixture = redisFixture;
             _redis = redisFixture.DB;
-            _jwtBearerOptions = new JwtBearerOptionsConfig("TestAudience", "TestIssuer", "TEST-SECRET-VERY-VERY-SECURE");
+            _jwtBearerOptions = new JwtBearerOptionsConfig()
+            {
+                Audience = "TestAudience",
+                Issuer = "TestIssuer",
+                Secret = "TEST-SECRET-VERY-VERY-SECURE",
+            };
             _usersService = new(_redis, _jwtBearerOptions);
         }
 
@@ -279,7 +284,7 @@ namespace FitnessTrackerBackend.Test.UsersTests
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = _jwtBearerOptions.Issuer,
                 ValidAudience = _jwtBearerOptions.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtBearerOptions.Secret))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtBearerOptions.Secret!))
             };
 
             var claimsPrincipal = handler.ValidateToken(token, valParams, out var validatedToken);
