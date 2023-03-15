@@ -1,5 +1,4 @@
 ﻿using FitnessTrackerBackend.Models.Workouts;
-using FitnessTrackerBackend.Test.Workouts;
 using StackExchange.Redis;
 using System.Text.Json;
 
@@ -15,11 +14,16 @@ namespace FitnessTrackerBackend.Services.Workouts
         }
 
         private const string UserWorkoutsIdKey = "workouts:{0}:id";  // {0} - UserId
-        private const string WorkoutByIdHashKey = "workouts:{0}:{1}";  // {0} - UserId, {1} - WorkoutId
 
-        private static string WorkoutById(string userId, string workoutId) => string.Format(WorkoutByIdHashKey, userId, workoutId);
+        private static string WorkoutByIdHashKey(string userId, string workoutId)
+        {
+            return string.Format("workouts:{0}:{1}", userId, workoutId);
+        }
 
-        private async Task<bool> WorkoutExistsAsync(string userId, string workoutId) => await _redis.KeyExistsAsync(WorkoutById(userId, workoutId));
+        private async Task<bool> WorkoutExistsAsync(string userId, string workoutId)
+        {
+            return await _redis.KeyExistsAsync(WorkoutByIdHashKey(userId, workoutId));
+        }
 
         public async Task<Workout> AddWorkoutAsync(string userId, WorkoutInput workout)
         {
@@ -30,17 +34,16 @@ namespace FitnessTrackerBackend.Services.Workouts
 
         public async Task<Workout?> GetWorkoutByIdAsync(string userId, string workoutId)
         {
+            if (!await WorkoutExistsAsync(userId, workoutId))
+            {
+                return null;
+            }
+
             // Get the hash key for the workout
-            string hashKey = string.Format(WorkoutByIdHashKey, userId, workoutId);
+            string hashKey = WorkoutByIdHashKey(userId, workoutId);
 
             // Get all the fields and values of the hash
             HashEntry[] hashEntries = await _redis.HashGetAllAsync(hashKey);
-
-            if (hashEntries.Length == 0)
-            {
-                // Return null if the workout does not exist
-                return null;
-            }
 
             // Deserialize the Exercises field
             List<Exercise> exercises = JsonSerializer.Deserialize<List<Exercise>>(hashEntries.First(x => x.Name == "Exercises").Value!) ?? new();
@@ -64,7 +67,7 @@ namespace FitnessTrackerBackend.Services.Workouts
 
         public async Task<bool> DeleteWorkoutAsync(string userId, string workoutId)
         {
-            return await _redis.KeyDeleteAsync(WorkoutById(userId, workoutId));
+            return await _redis.KeyDeleteAsync(WorkoutByIdHashKey(userId, workoutId));
         }
 
         private async Task<Workout> SetWorkoutAsync(string userId, string workoutId, WorkoutInput workout)
@@ -80,8 +83,7 @@ namespace FitnessTrackerBackend.Services.Workouts
             };
 
             // Add the hash entries to Redis
-            string key = string.Format(WorkoutByIdHashKey, userId, workoutId);
-            await _redis.HashSetAsync(key, hashEntries);
+            await _redis.HashSetAsync(WorkoutByIdHashKey(userId, workoutId), hashEntries);
 
             return new Workout
             {

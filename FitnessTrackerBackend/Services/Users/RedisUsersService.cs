@@ -1,5 +1,6 @@
 ﻿using FitnessTrackerBackend.Configuration;
 using FitnessTrackerBackend.Models.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
@@ -111,24 +112,50 @@ namespace FitnessTrackerBackend.Services.Authentication
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<UserModel?> GetUserByJWTToken(string token)
+        private string? GetUserIdByJWTToken(string token)
         {
             try
             {
                 var handler = new JwtSecurityTokenHandler();
-                
+
                 var claimsPrincipal = handler.ValidateToken(token, _tokenValidationParameters, out var validatedToken);
-                
+
                 var jwtToken = (JwtSecurityToken)validatedToken;
 
                 string userId = jwtToken.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
-                return await GetUserByIdAsync(userId);
+                return userId;
             }
-            catch
+            catch  // On ivalid token
             {
                 return null;
             }
+        }
+
+        public async Task<UserModel?> GetUserByJWTToken(string token)
+        {
+            string? userId = GetUserIdByJWTToken(token);
+
+            return userId is not null ? await GetUserByIdAsync(userId) : null;
+        }
+
+        public string? GetUserIdFromAuth(ControllerBase controller)
+        {
+            string? token = controller.HttpContext.Request.Headers["Authorization"].ToString();
+
+            return token.Replace("Bearer ", "");
+        }
+
+        public async Task<UserModel?> GetUserFromAuth(ControllerBase controller)
+        {
+            string? userId = GetUserIdFromAuth(controller);
+
+            if (userId is null)
+            {
+                return null;
+            }
+
+            return await GetUserByIdAsync(userId);
         }
 
         public async Task<UserModel?> GetUserByIdAsync(string userId)

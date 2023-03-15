@@ -17,6 +17,7 @@ namespace FitnessTrackerBackend.Models.Workouts
         public DateTimeOffset EndTime { get; init; }
 
         [Required]
+        [MinLength(1)]
         public ICollection<Exercise> Exercises { get; init; }
     }
 }

@@ -1,5 +1,6 @@
 using FitnessTrackerBackend.Configuration;
 using FitnessTrackerBackend.Services.Authentication;
+using FitnessTrackerBackend.Services.Workouts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -90,6 +91,14 @@ internal class Program
             var jwtBearerOptions = provider.GetRequiredService<IOptions<JwtBearerOptionsConfig>>().Value;
 
             return new RedisUsersService(redis, jwtBearerOptions);
+        });
+
+        // Add IWorkoutService singletone to DI
+        builder.Services.AddSingleton<IWorkoutService, WorkoutService>(provider =>
+        {
+            var redis = provider.GetRequiredService<IDatabase>();
+
+            return new WorkoutService(redis);
         });
     }
 }

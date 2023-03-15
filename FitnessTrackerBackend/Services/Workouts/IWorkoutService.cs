@@ -1,6 +1,6 @@
 ﻿using FitnessTrackerBackend.Models.Workouts;
 
-namespace FitnessTrackerBackend.Test.Workouts
+namespace FitnessTrackerBackend.Services.Workouts
 {
     public interface IWorkoutService
     {
