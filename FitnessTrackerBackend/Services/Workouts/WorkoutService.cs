@@ -60,6 +60,37 @@ namespace FitnessTrackerBackend.Services.Workouts
             };
         }
 
+        public async Task<List<Workout>> GetWorkoutsInIdRangeAsync(string userId, int from, int to)
+        {
+            List<Workout> workouts = new();
+
+            int lastWorkoutId = int.Parse(await GetUserLastWorkoutId(userId));
+
+            from = Math.Max(from, 1);
+            to = Math.Min(to, lastWorkoutId);
+
+            while (from <= to)
+            {
+                Workout? workout = await GetWorkoutByIdAsync(userId, from.ToString());
+
+                if (workout is not null)
+                {
+                    workouts.Add((Workout)workout);
+                }
+
+                from++;
+            }
+
+            return workouts;
+        }
+
+        public async Task<List<Workout>> GetLastWorkoutsAsync(string userId, int amount)
+        {
+            int lastWorkoutId = int.Parse(await GetUserLastWorkoutId(userId));
+
+            return await GetWorkoutsInIdRangeAsync(userId, lastWorkoutId - amount + 1, lastWorkoutId);
+        }
+
         public async Task<Workout?> UpdateWorkoutAsync(string userId, string workoutId, WorkoutInput workout)
         {
             return await WorkoutExistsAsync(userId, workoutId) ? await SetWorkoutAsync(userId, workoutId, workout) : null;

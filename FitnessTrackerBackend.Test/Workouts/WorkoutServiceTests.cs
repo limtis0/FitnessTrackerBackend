@@ -136,6 +136,125 @@ namespace FitnessTrackerBackend.Test.Workouts
 
         #endregion
 
+        #region GetWorkoutsInIdRangeAsync
+
+        [Fact]
+        public async Task GetWorkoutsInIdRangeAsync_ReturnsIdIncluded()
+        {
+            // Arrange
+            string userId = "test_user_id";
+
+            var workoutInput = new WorkoutInput
+            {
+                Name = "Leg Day",
+                Description = "A workout focused on the legs",
+                StartTime = new DateTimeOffset(2023, 03, 15, 12, 0, 0, TimeSpan.Zero),
+                EndTime = new DateTimeOffset(2023, 03, 15, 13, 0, 0, TimeSpan.Zero),
+                Exercises = new List<Exercise>
+                {
+                    new Exercise { Name = "Squats", Reps = 10, Sets = 3, Weight = 200, Calories = 100 },
+                    new Exercise { Name = "Lunges", Reps = 12, Sets = 3, Weight = 150, Calories = 80 }
+                }
+            };
+
+            for (int i = 0; i < 3; i++)
+            {
+                await _workoutService.AddWorkoutAsync(userId, workoutInput);
+            }
+
+            // Act
+            List<Workout> workouts = await _workoutService.GetWorkoutsInIdRangeAsync(userId, 1, 2);
+
+            // Assert
+            Assert.Equal(2, workouts.Count);
+            Assert.Equal("1", workouts[0].Id);
+            Assert.Equal("2", workouts[1].Id);
+        }
+
+        [Fact]
+        public async Task GetWorkoutsInIdRangeAsync_ClampsRange()
+        {
+            // Arrange
+            string userId = "test_user_id";
+
+            var workoutInput = new WorkoutInput
+            {
+                Name = "Leg Day",
+                Description = "A workout focused on the legs",
+                StartTime = new DateTimeOffset(2023, 03, 15, 12, 0, 0, TimeSpan.Zero),
+                EndTime = new DateTimeOffset(2023, 03, 15, 13, 0, 0, TimeSpan.Zero),
+                Exercises = new List<Exercise>
+                {
+                    new Exercise { Name = "Squats", Reps = 10, Sets = 3, Weight = 200, Calories = 100 },
+                    new Exercise { Name = "Lunges", Reps = 12, Sets = 3, Weight = 150, Calories = 80 }
+                }
+            };
+
+            for (int i = 0; i < 4; i++)
+            {
+                await _workoutService.AddWorkoutAsync(userId, workoutInput);
+            }
+
+            // Act
+            List<Workout> workouts = await _workoutService.GetWorkoutsInIdRangeAsync(userId, -100, 2000);
+
+            // Assert
+            Assert.Equal(4, workouts.Count);
+        }
+
+        [Fact]
+        public async Task GetWorkoutsInIdRangeAsync_ReturnsEmpty_WhenUserHasNoWorkouts()
+        {
+            // Arrange
+            string userId = "test_user_id";
+
+            // Act
+            List<Workout> workouts = await _workoutService.GetWorkoutsInIdRangeAsync(userId, 1, 20);
+
+            // Assert
+            Assert.Empty(workouts);
+        }
+
+        #endregion
+
+        #region GetLastWorkoutsAsync
+
+        [Fact]
+        public async Task GetLastWorkoutsAsync_ReturnsCorrect()
+        {
+            // Arrange
+            string userId = "test_user_id";
+
+            var workoutInput = new WorkoutInput
+            {
+                Name = "Leg Day",
+                Description = "A workout focused on the legs",
+                StartTime = new DateTimeOffset(2023, 03, 15, 12, 0, 0, TimeSpan.Zero),
+                EndTime = new DateTimeOffset(2023, 03, 15, 13, 0, 0, TimeSpan.Zero),
+                Exercises = new List<Exercise>
+                {
+                    new Exercise { Name = "Squats", Reps = 10, Sets = 3, Weight = 200, Calories = 100 },
+                    new Exercise { Name = "Lunges", Reps = 12, Sets = 3, Weight = 150, Calories = 80 }
+                }
+            };
+
+            for (int i = 0; i < 10; i++)
+            {
+                await _workoutService.AddWorkoutAsync(userId, workoutInput);
+            }
+
+            // Act
+            List<Workout> workouts = await _workoutService.GetLastWorkoutsAsync(userId, 3);
+
+            // Assert
+            Assert.Equal(3, workouts.Count);
+            Assert.NotEmpty(workouts.Where(w => w.Id == "8"));
+            Assert.NotEmpty(workouts.Where(w => w.Id == "9"));
+            Assert.NotEmpty(workouts.Where(w => w.Id == "10"));
+        }
+
+        #endregion
+
         #region GetUserLastWorkoutId
 
         [Fact]
