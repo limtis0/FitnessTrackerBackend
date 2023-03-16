@@ -17,7 +17,6 @@ namespace FitnessTrackerBackend.Controllers.Workouts
         {
             _workoutService = workoutService;
             _usersService = usersService;
-
         }
 
         [HttpPost]
@@ -33,7 +32,60 @@ namespace FitnessTrackerBackend.Controllers.Workouts
 
             var result = await _workoutService.AddWorkoutAsync(userId, workout);
 
-            return Ok(new Dictionary<string, Workout> { { "result", result } });
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetById(string workoutId)
+        {
+            string? userId = _usersService.GetUserIdFromAuth(this);
+
+            if (userId is null)
+            {
+                return Unauthorized();
+            }
+
+            var result = await _workoutService.GetWorkoutByIdAsync(userId, workoutId);
+
+            if (result is null)
+            {
+                return NotFound($"Workout with workoutId={workoutId} can not be found.");
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetByIdInRange(int from, int to)
+        {
+            string? userId = _usersService.GetUserIdFromAuth(this);
+
+            if (userId is null)
+            {
+                return Unauthorized();
+            }
+
+            var result = await _workoutService.GetWorkoutsInIdRangeAsync(userId, from, to);
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetLastWorkouts(int amount)
+        {
+            string? userId = _usersService.GetUserIdFromAuth(this);
+
+            if (userId is null)
+            {
+                return Unauthorized();
+            }
+
+            var result = await _workoutService.GetLastWorkoutsAsync(userId, amount);
+
+            return Ok(result);
         }
 
         [HttpPut]
@@ -51,7 +103,7 @@ namespace FitnessTrackerBackend.Controllers.Workouts
 
             if (result is null)
             {
-                return BadRequest($"Workout with workoutId={workoutId} can not be found.");
+                return NotFound($"Workout with workoutId={workoutId} can not be found.");
             }
 
             return Ok(result);
@@ -72,10 +124,10 @@ namespace FitnessTrackerBackend.Controllers.Workouts
 
             if (!result)
             {
-                return BadRequest($"Workout with workoutId={workoutId} can not be found.");
+                return NotFound($"Workout with workoutId={workoutId} can not be found.");
             }
 
-            return Ok(result);
+            return Ok();
         }
     }
 }
