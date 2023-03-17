@@ -8,8 +8,6 @@ namespace FitnessTrackerBackend.Services.Workouts
     {
         private readonly IDatabase _redis;
 
-        public event OnWorkoutUpdatedDelegate? OnWorkoutUpdated;
-
         public WorkoutService(IDatabase redis)
         {
             _redis = redis;
@@ -39,6 +37,8 @@ namespace FitnessTrackerBackend.Services.Workouts
             return await WorkoutExistsAsync(userId, workoutId) ? await SetWorkoutAsync(userId, workoutId, workout) : null;
         }
 
+        public event OnWorkoutUpdatedDelegate? OnWorkoutUpdated;
+
         private async Task<Workout> SetWorkoutAsync(string userId, string workoutId, WorkoutInput workout)
         {
             // Invoke OnWorkoutUpdated event
@@ -55,7 +55,11 @@ namespace FitnessTrackerBackend.Services.Workouts
                 Exercises = workout.Exercises
             };
 
-            OnWorkoutUpdated?.Invoke(oldWorkout, newWorkout);
+            if (OnWorkoutUpdated is not null)
+            {
+                // CONCURRENTLY await every subscriber-task
+                await Task.WhenAll(OnWorkoutUpdated.GetInvocationList().OfType<OnWorkoutUpdatedDelegate>().Select(h => h(oldWorkout, newWorkout)));
+            }
 
             // Add the hash entries to Redis
             var hashEntries = new HashEntry[]
