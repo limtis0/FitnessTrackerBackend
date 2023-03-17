@@ -8,7 +8,7 @@ namespace FitnessTrackerBackend.Services.Leaderboard
     {
         private readonly IDatabase _redis;
         private readonly IWorkoutService _workoutService;
-        
+
         public CalorieLeaderboardService(IDatabase redis, IWorkoutService workoutService)
         {
             _redis = redis;
@@ -21,7 +21,7 @@ namespace FitnessTrackerBackend.Services.Leaderboard
 
         public async Task<List<Dictionary<string, object>>> GetCalorieLeaderboardRange(int start, int stop)
         {
-            var query = await _redis.SortedSetRangeByScoreWithScoresAsync(CalorieLeaderboardKey, start, stop);
+            var query = await _redis.SortedSetRangeByRankWithScoresAsync(CalorieLeaderboardKey, start, stop);
 
             List<Dictionary<string, object>> top100 = new();
 

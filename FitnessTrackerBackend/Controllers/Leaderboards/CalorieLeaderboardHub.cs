@@ -12,7 +12,7 @@ namespace FitnessTrackerBackend.Controllers.Leaderboards
         private const int IntervalInSeconds = 10;
         private static Timer? _timer;
 
-        private CalorieLeaderboardService _service;
+        private readonly CalorieLeaderboardService _service;
         private readonly IHubContext<CalorieLeaderboardHub> _hubContext;
 
         public CalorieLeaderboardHub(CalorieLeaderboardService service, IHubContext<CalorieLeaderboardHub> hubContext)
