@@ -2,8 +2,12 @@
 
 namespace FitnessTrackerBackend.Services.Workouts
 {
+    public delegate void OnWorkoutUpdatedDelegate(Workout? oldWorkout, Workout newWorkout);
+
     public interface IWorkoutService
     {
+        event OnWorkoutUpdatedDelegate? OnWorkoutUpdated;
+
         Task<Workout> AddWorkoutAsync(string userId, WorkoutInput workout);
         Task<Workout?> GetWorkoutByIdAsync(string userId, string workoutId);
         Task<List<Workout>> GetWorkoutsInIdRangeAsync(string userId, int from, int to);

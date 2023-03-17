@@ -8,6 +8,8 @@ namespace FitnessTrackerBackend.Services.Workouts
     {
         private readonly IDatabase _redis;
 
+        public event OnWorkoutUpdatedDelegate? OnWorkoutUpdated;
+
         public WorkoutService(IDatabase redis)
         {
             _redis = redis;
@@ -30,6 +32,45 @@ namespace FitnessTrackerBackend.Services.Workouts
             string workoutId = await GetUserNextWorkoutId(userId);
 
             return await SetWorkoutAsync(userId, workoutId, workout);
+        }
+
+        public async Task<Workout?> UpdateWorkoutAsync(string userId, string workoutId, WorkoutInput workout)
+        {
+            return await WorkoutExistsAsync(userId, workoutId) ? await SetWorkoutAsync(userId, workoutId, workout) : null;
+        }
+
+        private async Task<Workout> SetWorkoutAsync(string userId, string workoutId, WorkoutInput workout)
+        {
+            // Invoke OnWorkoutUpdated event
+            Workout? oldWorkout = await GetWorkoutByIdAsync(userId, workoutId);
+
+            var newWorkout = new Workout
+            {
+                Id = workoutId,
+                UserId = userId,
+                Name = workout.Name,
+                Description = workout.Description,
+                StartTime = workout.StartTime,
+                EndTime = workout.EndTime,
+                Exercises = workout.Exercises
+            };
+
+            OnWorkoutUpdated?.Invoke(oldWorkout, newWorkout);
+
+            // Add the hash entries to Redis
+            var hashEntries = new HashEntry[]
+            {
+                new HashEntry("UserId", userId),
+                new HashEntry("Name", workout.Name),
+                new HashEntry("Description", workout.Description),
+                new HashEntry("StartTime", workout.StartTime.ToString("o")),
+                new HashEntry("EndTime", workout.EndTime.ToString("o")),
+                new HashEntry("Exercises", JsonSerializer.Serialize(workout.Exercises.ToList()))
+            };
+
+            await _redis.HashSetAsync(WorkoutByIdHashKey(userId, workoutId), hashEntries);
+
+            return newWorkout;
         }
 
         public async Task<Workout?> GetWorkoutByIdAsync(string userId, string workoutId)
@@ -91,41 +132,9 @@ namespace FitnessTrackerBackend.Services.Workouts
             return await GetWorkoutsInIdRangeAsync(userId, lastWorkoutId - amount + 1, lastWorkoutId);
         }
 
-        public async Task<Workout?> UpdateWorkoutAsync(string userId, string workoutId, WorkoutInput workout)
-        {
-            return await WorkoutExistsAsync(userId, workoutId) ? await SetWorkoutAsync(userId, workoutId, workout) : null;
-        }
-
         public async Task<bool> DeleteWorkoutAsync(string userId, string workoutId)
         {
             return await _redis.KeyDeleteAsync(WorkoutByIdHashKey(userId, workoutId));
-        }
-
-        private async Task<Workout> SetWorkoutAsync(string userId, string workoutId, WorkoutInput workout)
-        {
-            var hashEntries = new HashEntry[]
-            {
-                new HashEntry("UserId", userId),
-                new HashEntry("Name", workout.Name),
-                new HashEntry("Description", workout.Description),
-                new HashEntry("StartTime", workout.StartTime.ToString("o")),
-                new HashEntry("EndTime", workout.EndTime.ToString("o")),
-                new HashEntry("Exercises", JsonSerializer.Serialize(workout.Exercises.ToList()))
-            };
-
-            // Add the hash entries to Redis
-            await _redis.HashSetAsync(WorkoutByIdHashKey(userId, workoutId), hashEntries);
-
-            return new Workout
-            {
-                Id = workoutId,
-                UserId = userId,
-                Name = workout.Name,
-                Description = workout.Description,
-                StartTime = workout.StartTime,
-                EndTime = workout.EndTime,
-                Exercises = workout.Exercises
-            };
         }
 
         public async Task<string> GetUserLastWorkoutId(string userId)
