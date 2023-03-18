@@ -157,7 +157,7 @@ namespace FitnessTrackerBackend.Services.Workouts
             string key = string.Format(UserWorkoutsIdKey, userId);
             string? id = await _redis.StringGetAsync(key);
 
-            return  id ?? "-1";
+            return id ?? "-1";
         }
 
         private async Task<string> GetUserNextWorkoutId(string userId)

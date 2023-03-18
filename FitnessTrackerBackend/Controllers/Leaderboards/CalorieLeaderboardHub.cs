@@ -1,7 +1,6 @@
 ﻿using FitnessTrackerBackend.Services.Leaderboard;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using StackExchange.Redis;
 
 namespace FitnessTrackerBackend.Controllers.Leaderboards
 {

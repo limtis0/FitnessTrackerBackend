@@ -27,8 +27,8 @@ namespace FitnessTrackerBackend.Services.Leaderboard
 
             foreach (SortedSetEntry entry in query)
             {
-                top100.Add(new() 
-                { 
+                top100.Add(new()
+                {
                     { "userId", entry.Element.ToString() },
                     { "calories", (int)entry.Score }
                 });

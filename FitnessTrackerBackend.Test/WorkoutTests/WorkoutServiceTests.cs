@@ -1,8 +1,8 @@
 ﻿using FitnessTrackerBackend.Models.Workouts;
 using FitnessTrackerBackend.Services.Workouts;
 using FitnessTrackerBackend.Test.Fixtures.Redis;
-using System.Text.Json;
 using StackExchange.Redis;
+using System.Text.Json;
 
 namespace FitnessTrackerBackend.Test.Workouts
 {
@@ -61,7 +61,7 @@ namespace FitnessTrackerBackend.Test.Workouts
             Assert.Equal(workoutInput.Description, hashEntries.First(e => e.Name == "Description").Value);
             Assert.Equal(workoutInput.StartTime.ToString("o"), hashEntries.First(e => e.Name == "StartTime").Value);
             Assert.Equal(workoutInput.EndTime.ToString("o"), hashEntries.First(e => e.Name == "EndTime").Value);
-            
+
             var exercisesJson = hashEntries.First(e => e.Name == "Exercises").Value;
             List<Exercise> deserializedExercises = JsonSerializer.Deserialize<List<Exercise>>(exercisesJson!)!;
             Assert.Equal(workoutInput.Exercises.Count, deserializedExercises.Count);
@@ -365,7 +365,7 @@ namespace FitnessTrackerBackend.Test.Workouts
             await _workoutService.AddWorkoutAsync(userId, workoutInput);
 
             // Act
-            var result = (Workout) await _workoutService.UpdateWorkoutAsync(userId, workout.Id, updateInput);
+            var result = (Workout)await _workoutService.UpdateWorkoutAsync(userId, workout.Id, updateInput);
 
             // Assert
             Assert.Equal(updateInput.Name, result.Name);

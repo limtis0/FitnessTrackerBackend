@@ -1,7 +1,7 @@
-﻿using Docker.DotNet.Models;
-using Docker.DotNet;
-using StackExchange.Redis;
+﻿using Docker.DotNet;
+using Docker.DotNet.Models;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace FitnessTrackerBackend.Test.Fixtures.Redis
 {
@@ -79,8 +79,8 @@ namespace FitnessTrackerBackend.Test.Fixtures.Redis
         public IServiceProvider ServiceProvider { get; private set; }
 
         public IDatabase DB
-        { 
-            get 
+        {
+            get
             {
                 var redis = ServiceProvider.GetService<IConnectionMultiplexer>() ?? throw new ArgumentException("Redis service is not set up, or set up incorrectly");
                 return redis.GetDatabase();

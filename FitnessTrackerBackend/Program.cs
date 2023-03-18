@@ -1,13 +1,13 @@
 using FitnessTrackerBackend.Configuration;
+using FitnessTrackerBackend.Controllers.Leaderboards;
 using FitnessTrackerBackend.Services.Authentication;
+using FitnessTrackerBackend.Services.Leaderboard;
 using FitnessTrackerBackend.Services.Workouts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
-using FitnessTrackerBackend.Controllers.Leaderboards;
-using FitnessTrackerBackend.Services.Leaderboard;
 
 internal class Program
 {

@@ -312,7 +312,7 @@ namespace FitnessTrackerBackend.Test.UsersTests
         #endregion
 
         #region GetUserByJWTToken
-        
+
         [Fact]
         public async Task GetUserByJWTToken_ReturnsUser_ForValidToken()
         {

@@ -58,7 +58,7 @@ namespace FitnessTrackerBackend.Test.LeaderboardTests
             {
                 await _workoutService.AddWorkoutAsync(userId, workoutInput);
             }
-            
+
             var result = await _leaderboardService.GetCalorieLeaderboardRange(0, 99);
 
             // Assert
