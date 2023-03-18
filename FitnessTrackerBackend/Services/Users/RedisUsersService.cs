@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace FitnessTrackerBackend.Services.Authentication
 {
-    public class RedisUsersService : IRedisUsersService
+    public class RedisUsersService
     {
         private readonly IDatabase _redis;
         private readonly JwtBearerOptionsConfig _jwtBearerOptions;
@@ -112,7 +112,7 @@ namespace FitnessTrackerBackend.Services.Authentication
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private string? GetUserIdByJWTToken(string token)
+        private string? GetUserIdFromJWTToken(string token)
         {
             try
             {
@@ -134,7 +134,7 @@ namespace FitnessTrackerBackend.Services.Authentication
 
         public async Task<UserModel?> GetUserByJWTToken(string token)
         {
-            string? userId = GetUserIdByJWTToken(token);
+            string? userId = GetUserIdFromJWTToken(token);
 
             return userId is not null ? await GetUserByIdAsync(userId) : null;
         }
@@ -143,7 +143,7 @@ namespace FitnessTrackerBackend.Services.Authentication
         {
             string? token = controller.HttpContext.Request.Headers["Authorization"].ToString();
 
-            return token.Replace("Bearer ", "");
+            return GetUserIdFromJWTToken(token.Replace("Bearer ", ""));
         }
 
         public async Task<UserModel?> GetUserFromAuth(ControllerBase controller)

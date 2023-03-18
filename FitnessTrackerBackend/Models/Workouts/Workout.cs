@@ -20,7 +20,7 @@ namespace FitnessTrackerBackend.Models.Workouts
         public DateTimeOffset StartTime { get; init; }
 
         [Required]
-        public DateTimeOffset EndTime { get; init;}
+        public DateTimeOffset EndTime { get; init; }
 
         [Required]
         public ICollection<Exercise> Exercises { get; init; }

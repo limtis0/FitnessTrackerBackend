@@ -21,6 +21,6 @@ namespace FitnessTrackerBackend.Models.Workouts
 
         [Required]
         [Range(0, int.MaxValue)]
-        public int Calories { get; init; } 
+        public int Calories { get; init; }
     }
 }

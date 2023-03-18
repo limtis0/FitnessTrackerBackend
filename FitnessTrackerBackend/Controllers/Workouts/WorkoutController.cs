@@ -10,10 +10,10 @@ namespace FitnessTrackerBackend.Controllers.Workouts
     [Route("[controller]/[action]")]
     public class WorkoutController : ControllerBase
     {
-        private readonly IWorkoutService _workoutService;
-        private readonly IRedisUsersService _usersService;
+        private readonly WorkoutService _workoutService;
+        private readonly RedisUsersService _usersService;
 
-        public WorkoutController(IWorkoutService workoutService, IRedisUsersService usersService)
+        public WorkoutController(WorkoutService workoutService, RedisUsersService usersService)
         {
             _workoutService = workoutService;
             _usersService = usersService;

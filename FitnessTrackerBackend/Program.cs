@@ -1,5 +1,7 @@
 using FitnessTrackerBackend.Configuration;
+using FitnessTrackerBackend.Controllers.Leaderboards;
 using FitnessTrackerBackend.Services.Authentication;
+using FitnessTrackerBackend.Services.Leaderboard;
 using FitnessTrackerBackend.Services.Workouts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -24,6 +26,8 @@ internal class Program
 
         ConfigureCustomServices(builder);
 
+        builder.Services.AddSignalR();
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -38,6 +42,10 @@ internal class Program
         app.UseAuthorization();
 
         app.MapControllers();
+
+        MapHubs(app);
+
+        InstantiateServices(app);
 
         app.Run();
     }
@@ -68,7 +76,7 @@ internal class Program
             {
                 var jwtBearerOptions = config.Get<JwtBearerOptionsConfig>()
                     ?? throw new Exception("'JwtBearerOptions' section not found in 'appsettings.json'");
-                
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -84,8 +92,8 @@ internal class Program
 
     private static void ConfigureCustomServices(WebApplicationBuilder builder)
     {
-        // Add IRedisUserService singletone to DI
-        builder.Services.AddSingleton<IRedisUsersService, RedisUsersService>(provider =>
+        // RedisUserService
+        builder.Services.AddSingleton(provider =>
         {
             var redis = provider.GetRequiredService<IDatabase>();
             var jwtBearerOptions = provider.GetRequiredService<IOptions<JwtBearerOptionsConfig>>().Value;
@@ -93,12 +101,19 @@ internal class Program
             return new RedisUsersService(redis, jwtBearerOptions);
         });
 
-        // Add IWorkoutService singletone to DI
-        builder.Services.AddSingleton<IWorkoutService, WorkoutService>(provider =>
-        {
-            var redis = provider.GetRequiredService<IDatabase>();
+        builder.Services.AddSingleton<WorkoutService>();
 
-            return new WorkoutService(redis);
-        });
+        builder.Services.AddSingleton<CalorieLeaderboardService>();
+    }
+
+    private static void MapHubs(WebApplication app)
+    {
+        app.MapHub<CalorieLeaderboardHub>("/Leaderboard/Calories/Hub");
+    }
+
+    // Used for services that need to be instantiated before app runs (i.e. Event-subscribers)
+    private static void InstantiateServices(WebApplication app)
+    {
+        app.Services.GetService<CalorieLeaderboardService>();
     }
 }

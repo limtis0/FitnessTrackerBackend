@@ -45,7 +45,7 @@ namespace FitnessTrackerBackend.Test.UsersTests
             // Arrange
             var registration = new UserRegistrationModel("testuser", "test@example.com", "testpassword");
             await _usersService.RegisterUserAsync(registration);
-            
+
             // Act
             var result = await _controller.Registration(registration);
 
