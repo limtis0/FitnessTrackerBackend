@@ -39,6 +39,15 @@ namespace FitnessTrackerBackend.Services.Workouts
 
         public event OnWorkoutUpdatedDelegate? OnWorkoutUpdated;
 
+        private async Task InvokeOnWorkoutUpdatedAsync(Workout? oldWorkout, Workout? newWorkout, string userId)
+        {
+            // CONCURRENTLY await every subscriber-task
+            if (OnWorkoutUpdated is not null)
+            {
+                await Task.WhenAll(OnWorkoutUpdated.GetInvocationList().OfType<OnWorkoutUpdatedDelegate>().Select(h => h(oldWorkout, newWorkout, userId)));
+            }
+        }
+
         private async Task<Workout> SetWorkoutAsync(string userId, string workoutId, WorkoutInput workout)
         {
             // Invoke OnWorkoutUpdated event
@@ -55,11 +64,7 @@ namespace FitnessTrackerBackend.Services.Workouts
                 Exercises = workout.Exercises
             };
 
-            if (OnWorkoutUpdated is not null)
-            {
-                // CONCURRENTLY await every subscriber-task
-                await Task.WhenAll(OnWorkoutUpdated.GetInvocationList().OfType<OnWorkoutUpdatedDelegate>().Select(h => h(oldWorkout, newWorkout)));
-            }
+            await InvokeOnWorkoutUpdatedAsync(oldWorkout, newWorkout, userId);
 
             // Add the hash entries to Redis
             var hashEntries = new HashEntry[]
@@ -138,6 +143,10 @@ namespace FitnessTrackerBackend.Services.Workouts
 
         public async Task<bool> DeleteWorkoutAsync(string userId, string workoutId)
         {
+            Workout? oldWorkout = await GetWorkoutByIdAsync(userId, workoutId);
+
+            await InvokeOnWorkoutUpdatedAsync(oldWorkout, null, userId);
+
             return await _redis.KeyDeleteAsync(WorkoutByIdHashKey(userId, workoutId));
         }
 

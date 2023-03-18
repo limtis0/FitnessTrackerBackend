@@ -21,7 +21,7 @@ namespace FitnessTrackerBackend.Services.Leaderboard
 
         public async Task<List<Dictionary<string, object>>> GetCalorieLeaderboardRange(int start, int stop)
         {
-            var query = await _redis.SortedSetRangeByRankWithScoresAsync(CalorieLeaderboardKey, start, stop);
+            var query = await _redis.SortedSetRangeByRankWithScoresAsync(CalorieLeaderboardKey, start, stop, Order.Descending);
 
             List<Dictionary<string, object>> top100 = new();
 
@@ -37,16 +37,21 @@ namespace FitnessTrackerBackend.Services.Leaderboard
             return top100;
         }
 
-        private async Task UpdateCalorieLeaderboard(Workout? oldWorkout, Workout newWorkout)
+        private async Task UpdateCalorieLeaderboard(Workout? oldWorkout, Workout? newWorkout, string userId)
         {
-            int caloriesDiff = SumCalories(newWorkout);
+            int caloriesDiff = 0;
 
             if (oldWorkout is not null)
             {
                 caloriesDiff -= SumCalories((Workout)oldWorkout);
             }
 
-            await _redis.SortedSetIncrementAsync(CalorieLeaderboardKey, newWorkout.UserId, caloriesDiff);
+            if (newWorkout is not null)
+            {
+                caloriesDiff += SumCalories((Workout)newWorkout);
+            }
+
+            await _redis.SortedSetIncrementAsync(CalorieLeaderboardKey, userId, caloriesDiff);
         }
 
         private static int SumCalories(Workout workout) => workout.Exercises.Sum(e => e.Calories);

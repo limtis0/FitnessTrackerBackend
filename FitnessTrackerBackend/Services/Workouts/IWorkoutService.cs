@@ -2,7 +2,7 @@
 
 namespace FitnessTrackerBackend.Services.Workouts
 {
-    public delegate Task OnWorkoutUpdatedDelegate(Workout? oldWorkout, Workout newWorkout);
+    public delegate Task OnWorkoutUpdatedDelegate(Workout? oldWorkout, Workout? newWorkout, string userId);
 
     public interface IWorkoutService
     {
