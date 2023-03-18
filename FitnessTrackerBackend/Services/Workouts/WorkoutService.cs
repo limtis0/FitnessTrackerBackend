@@ -4,7 +4,9 @@ using System.Text.Json;
 
 namespace FitnessTrackerBackend.Services.Workouts
 {
-    public class WorkoutService : IWorkoutService
+    public delegate Task OnWorkoutUpdatedDelegate(Workout? oldWorkout, Workout? newWorkout, string userId);
+
+    public class WorkoutService
     {
         private readonly IDatabase _redis;
 

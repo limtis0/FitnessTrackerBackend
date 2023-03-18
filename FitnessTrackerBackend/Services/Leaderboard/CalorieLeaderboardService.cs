@@ -7,9 +7,9 @@ namespace FitnessTrackerBackend.Services.Leaderboard
     public class CalorieLeaderboardService
     {
         private readonly IDatabase _redis;
-        private readonly IWorkoutService _workoutService;
+        private readonly WorkoutService _workoutService;
 
-        public CalorieLeaderboardService(IDatabase redis, IWorkoutService workoutService)
+        public CalorieLeaderboardService(IDatabase redis, WorkoutService workoutService)
         {
             _redis = redis;
 

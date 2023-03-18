@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace FitnessTrackerBackend.Services.Authentication
 {
-    public class RedisUsersService : IRedisUsersService
+    public class RedisUsersService
     {
         private readonly IDatabase _redis;
         private readonly JwtBearerOptionsConfig _jwtBearerOptions;

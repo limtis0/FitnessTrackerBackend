@@ -8,9 +8,9 @@ namespace FitnessTrackerBackend.Controllers.Authentication
     [Route("[controller]/[action]")]
     public class AuthenticationController : ControllerBase
     {
-        private readonly IRedisUsersService _usersService;
+        private readonly RedisUsersService _usersService;
 
-        public AuthenticationController(IRedisUsersService usersService)
+        public AuthenticationController(RedisUsersService usersService)
         {
             _usersService = usersService;
         }

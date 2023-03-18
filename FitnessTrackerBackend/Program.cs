@@ -93,7 +93,7 @@ internal class Program
     private static void ConfigureCustomServices(WebApplicationBuilder builder)
     {
         // IRedisUserService
-        builder.Services.AddSingleton<IRedisUsersService, RedisUsersService>(provider =>
+        builder.Services.AddSingleton(provider =>
         {
             var redis = provider.GetRequiredService<IDatabase>();
             var jwtBearerOptions = provider.GetRequiredService<IOptions<JwtBearerOptionsConfig>>().Value;
@@ -101,8 +101,7 @@ internal class Program
             return new RedisUsersService(redis, jwtBearerOptions);
         });
 
-        // IWorkoutService
-        builder.Services.AddSingleton<IWorkoutService, WorkoutService>();
+        builder.Services.AddSingleton<WorkoutService>();
 
         // CalorieLeaderboardService
         builder.Services.AddSingleton<CalorieLeaderboardService>();
