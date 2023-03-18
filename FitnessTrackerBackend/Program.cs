@@ -92,7 +92,7 @@ internal class Program
 
     private static void ConfigureCustomServices(WebApplicationBuilder builder)
     {
-        // IRedisUserService
+        // RedisUserService
         builder.Services.AddSingleton(provider =>
         {
             var redis = provider.GetRequiredService<IDatabase>();
@@ -103,7 +103,6 @@ internal class Program
 
         builder.Services.AddSingleton<WorkoutService>();
 
-        // CalorieLeaderboardService
         builder.Services.AddSingleton<CalorieLeaderboardService>();
     }
 
